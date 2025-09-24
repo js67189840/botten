@@ -1,28 +1,67 @@
-// site.js - 共通ナビ&簡易スクリプト
+// site.js - 共通スクリプト
 document.addEventListener('DOMContentLoaded', function() {
-  // アクティブリンク設定
-  const links = document.querySelectorAll('header nav a');
-  links.forEach(a => {
-    if (a.href === location.href || location.pathname.endsWith(a.getAttribute('href'))) {
-      a.classList.add('active');
-    }
+  // mobile menu toggle
+  var menuBtn = document.getElementById('menuBtn');
+  var nav = document.querySelector('.main-nav');
+  if (menuBtn) {
+    menuBtn.addEventListener('click', function() {
+      if (nav.style.display === 'flex') {
+        nav.style.display = 'none';
+      } else {
+        nav.style.display = 'flex';
+        nav.style.flexDirection = 'column';
+      }
+    });
+  }
+
+  // active link highlight
+  var links = document.querySelectorAll('.main-nav a');
+  links.forEach(function(a){
+    try {
+      if (location.pathname.endsWith(a.getAttribute('href'))) {
+        a.style.background = 'rgba(255,255,255,0.12)';
+        a.style.borderRadius = '8px';
+      }
+    } catch(e){}
   });
 
-  // 問い合わせフォームの簡易バリデーション（存在する場合）
-  const contactForm = document.getElementById('contactForm');
-  if (contactForm) {
-    contactForm.addEventListener('submit', function(e) {
+  // contact form validation and Formspree submit
+  var form = document.getElementById('contactForm');
+  if (form) {
+    form.addEventListener('submit', async function(e){
       e.preventDefault();
-      const name = contactForm.elements['name'].value.trim();
-      const email = contactForm.elements['email'].value.trim();
-      const message = contactForm.elements['message'].value.trim();
+      var name = form.elements['name'].value.trim();
+      var email = form.elements['email'].value.trim();
+      var message = form.elements['message'].value.trim();
+      
       if (!name || !email || !message) {
-        alert('氏名・メール・メッセージは必須です。');
+        alert('氏名・メール・お問い合わせ内容は必須です。');
         return;
       }
-      // ここでは送信処理は行わず、ダミーで成功表示
-      alert('送信を受け付けました（ダミー）。実運用ではバックエンドを用意してください。');
-      contactForm.reset();
+      // simple email check
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        alert('有効なメールアドレスを入力してください。');
+        return;
+      }
+
+      // Formspree submission
+      try {
+        const data = new FormData(form);
+        const response = await fetch('https://formspree.io/f/xvgwoerw', {
+          method: 'POST',
+          body: data,
+          headers: { 'Accept': 'application/json' }
+        });
+        if (response.ok) {
+          alert('送信が完了しました。ありがとうございます！');
+          form.reset();
+        } else {
+          alert('送信に失敗しました。時間を置いて再度お試しください。');
+        }
+      } catch (err) {
+        alert('送信中にエラーが発生しました。');
+        console.error(err);
+      }
     });
   }
 });
